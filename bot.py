@@ -1,5 +1,5 @@
 import telebot
-from PIL import Image, ImageFilter
+from PIL import Image, ImageFilter, ImageChops
 import os
 
 bot = telebot.TeleBot('7431905855:AAF7IwC-5FfKlWNRFXDErU0oNXfYxTViZxw')
@@ -39,10 +39,26 @@ def handle_photo(message):
     btn3 = telebot.types.KeyboardButton("Повернуть")
     btn4 = telebot.types.KeyboardButton("Сделать квадратным")
     btn5 = telebot.types.KeyboardButton("Сократить цвета")
-    btn6 = telebot.types.KeyboardButton("Новое фото")
+    btn6 = telebot.types.KeyboardButton("Негатив")
+    btn7 = telebot.types.KeyboardButton("Новое фото")
     markup.add(btn1, btn2, btn3)
     markup.add(btn4, btn5, btn6)
+    markup.add(btn7)
     bot.reply_to(message, "Выберите действие с фото:", reply_markup=markup)
+
+
+@bot.message_handler(func=lambda message: message.text == 'Негатив')
+def negative(message):
+    if message.chat.id not in user_states:
+        bot.reply_to(message, "Сначала отправьте фото!")
+        return
+    photo_path = user_states[message.chat.id]['photo_path']
+    img = ImageChops.invert(Image.open(photo_path))
+    output_path = f"negative_{message.chat.id}.jpg"
+    img.save(output_path)
+    with open(output_path, 'rb') as photo:
+        bot.send_photo(message.chat.id, photo)
+    os.remove(output_path)
 
 
 @bot.message_handler(func=lambda message: message.text == "Черно-белое")
